@@ -5,14 +5,14 @@ struct Vec2 {
 
 Vec2 vec_sub(Vec2 v1, Vec2 v2) {
   Vec2 v;
-  v.x = v1.x - v2.y;
+  v.x = v1.x - v2.x;
   v.y = v1.y - v2.y;
   return v;
 }
 
 Vec2 vec_add(Vec2 v1, Vec2 v2) {
   Vec2 v;
-  v.x = v1.x + v2.y;
+  v.x = v1.x + v2.x;
   v.y = v1.y + v2.y;
   return v;
 }
