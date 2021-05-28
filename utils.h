@@ -41,3 +41,13 @@ long clamp_power(float power) {
   }
   return power;
 }
+
+void wait_iteration_time(float iteration_start) {
+  float iteration_end = iteration_start + ITERATION_TIME;
+  Wait(5);
+  while(true) {
+    if (iteration_end <= CurrentTick()) {
+      break;
+    }
+  }
+}

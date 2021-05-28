@@ -5,13 +5,23 @@
 
 #define MAX_X 4368 // 4323 (degrees)
 #define MAX_Y 2568 // 2511 (degrees)
-#define MAX_POWER 40
+#define MAX_POWER 70
+#define TARGET_VELOCITY 0.4 // degrees/ms
 
-#define Kp 1.0
-#define Ki 0.5
-#define Kd 0.1
 
-#define REG_TIME 20.0
+// Kc (critical gain) = 3.0
+// dT (loop time) = 20 ms
+// Pc (oscillation period at critical gain) = 250 ms
+// PID:
+//   Kp=0.60Kc          ~1.8
+//   Ki=2KpdT / Pc      ~0.2
+//   Kd=KpPc / (8dT)    ~3.9
+
+#define Kp 1.8
+#define Ki 0.18
+#define Kd 3.0
+
+#define ITERATION_TIME 20.0
 
 #include "utils.h"
 #include "vector_math.h"
@@ -22,13 +32,13 @@
 
 inline void initialize() {
   calibrate(M_X, false);
-  Wait(1500);
+  Wait(500);
   ResetRotationCount(M_X);
 
   calibrate(M_Y, false);
-  Wait(1500);
+  Wait(500);
   ResetRotationCount(M_Y);
-  Wait(1500);
+  Wait(500);
 }
 
 
@@ -38,110 +48,44 @@ task main() {
   Rig rig;
   initialize_rig(rig);
 
-  rig_move_to(rig, vec(1000, 1000));
+
+  // rig_move_to(rig, vec(1000, 1000));
+
+  // pen_down();
+  // rig_move_to(rig, vec(2000, 1000));
+  // rig_move_to(rig, vec(2000, 2000));
+  // rig_move_to(rig, vec(1000, 1000));
+  // pen_up();
+
+
+  rig_move_to(rig, vec(900, 700));
+  pen_down();
+  rig_move_to(rig, vec(1500, 2000));
+  rig_move_to(rig, vec(1500, 700));
+  pen_up();
+  rig_move_to(rig, vec(1000, 1500));
+  pen_down();
+  rig_move_to(rig, vec(1600,  1500));
+  pen_up();
+  rig_move_to(rig, vec(1900,  2000));
+  pen_down();
+  rig_move_to(rig, vec(2300,  2000));
+  pen_up();
+  rig_move_to(rig, vec(2100, 2000));
+  pen_down();
+  rig_move_to(rig, vec(2100,  700));
+  pen_up();
+  rig_move_to(rig, vec(1900, 700));
+  pen_down();
+  rig_move_to(rig, vec(2300,  700));
+  pen_up();
   Wait(1000);
-  rig_move_to(rig, vec(1000, 1300));
-  Wait(1000);
-  rig_move_to(rig, vec(500, 1000));
-  Wait(1000);
-  rig_move_to(rig, vec(700, 200));
-  Wait(1000);
 
-  // ClearScreen();
-  // NumOut(0, LCD_LINE1, MotorRotationCount(M_X));
-  // NumOut(0, LCD_LINE1, MotorRotationCount(M_Y));
-  // Wait(2000);
+  // rig_move_to(rig, vec(1000, 1300));
+  // Wait(1000);
+  // rig_move_to(rig, vec(500, 1000));
+  // Wait(1000);
+  // rig_move_to(rig, vec(700, 200));
 
-  // repeat(4) {
-  //   RotateMotor(M_X, 40, 300);
-  //   RotateMotor(M_Y, 40, 200);
-  //   Wait(2000);
-  //   ClearScreen();
-  //   NumOut(0, LCD_LINE1, MotorRotationCount(M_X));
-  //   NumOut(0, LCD_LINE1, MotorRotationCount(M_Y));
-  //   Wait(2000);
-  // }
-
-  // long power = 0;
-  // long kp = 1;
-  // long previous_x = 0;
-  // long current_x = -100;
-  // long previous_error = 0;
-  // long current_error = 0;
-  // long time = CurrentTick();
-  // long start_time = time;
-
-  // long iteration_count = 0;
-
-  // long postions[10];
-
-  // while (true) {
-  //   time = CurrentTick();
-  //   previous_x = current_x;
-  //   current_x = MotorRotationCount(M_X);
-  //   if (iteration_count < 10)
-  //   {
-  //     postions[iteration_count] = current_x;
-  //   }
-
-  //   current_error = x(time - start_time) - current_x;
-
-  //   power = kp * current_error;
-
-  //   ClearScreen();
-
-  //   TextOut(0, LCD_LINE1, "Power:");
-  //   NumOut(50, LCD_LINE1, power);
-  //   TextOut(0, LCD_LINE2, "X:");
-  //   NumOut(50, LCD_LINE2, current_x - previous_x);
-  //   // TextOut(0, LCD_LINE3, "X-1:");
-  //   // NumOut(50, LCD_LINE3, x(time - start_time));
-  //   TextOut(0, LCD_LINE4, "Iter:");
-  //   NumOut(50, LCD_LINE4, iteration_count);
-
-  //   OnFwd(M_X, clamp(power));
-
-  //   previous_error = current_error;
-  //   // if (power != 0 && current_x == previous_x) {
-  //   //   break;
-  //   // }
-  //   if (time - start_time > 6000) {
-  //     break;
-  //   }
-  //   Wait(50);
-
-  //   iteration_count = iteration_count + 1;
-  // }
-
-  // long times[10];
-
-  // RotateMotor(M_X, 50, 50);
-
-  // int mul = 0;
-  // long t = 0;
-  // int power = 0;
-
-  // for (int i = 0; i < 10; ++i)
-  // {
-  //   if (i % 2 == 1)
-  //   {
-  //     mul = -1;
-  //   } else {
-  //     mul = 1;
-  //   }
-
-  //   power = mul * (i + 1) * 10;
-  //   t = CurrentTick();
-  //   RotateMotor(M_X, power, 3600);
-  //   times[i] = CurrentTick() - t;
-
-  //   ClearScreen();
-  //   NumOut(0, LCD_LINE1, times[i]);
-
-  //   Wait(2000);
-  // }
-
-
-  Wait(5000);
 
 }

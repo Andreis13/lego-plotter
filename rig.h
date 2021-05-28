@@ -17,6 +17,10 @@ void rig_update_position(Rig &rig) {
   rig.position.y = MotorRotationCount(M_Y);
 }
 
+void rig_stop(Rig &rig) {
+  vec_nullify(rig.power);
+}
+
 void rig_regulate(Rig &rig, Vec2 target_position) {
   rig.prev_error = rig.error;
   rig.error = vec_sub(target_position, rig.position);
@@ -24,10 +28,15 @@ void rig_regulate(Rig &rig, Vec2 target_position) {
 
   rig.power.x = Kp * rig.error.x + Ki * rig.integral_error.x + Kd * (rig.error.x - rig.prev_error.x);
   rig.power.y = Kp * rig.error.y + Ki * rig.integral_error.y + Kd * (rig.error.y - rig.prev_error.y);
+
+  // turn off power if rig reached destination and is not moving
+  if (vec_is_null(rig.prev_error) && vec_is_null(rig.error) && vec_is_null(vec_sub(rig.position, rig.prev_position))) {
+    rig_stop(rig);
+  }
 }
 
 bool rig_is_stationary(Rig &rig) {
-  return (vec_is_null(rig.error) && vec_is_null(rig.power));
+  return (vec_is_null(rig.error) && vec_is_null(vec_sub(rig.position, rig.prev_position)));
 }
 
 void initialize_rig(Rig &rig) {
@@ -43,38 +52,45 @@ void initialize_rig(Rig &rig) {
   vec_nullify(rig.prev_error);
 }
 
+void display_rig_data(Rig &rig) {
+  ClearScreen();
+  NumOut(0, LCD_LINE2, rig.power.x);
+  NumOut(0, LCD_LINE3, rig.power.y);
+  NumOut(0, LCD_LINE4, rig.error.x);
+  NumOut(0, LCD_LINE5, rig.error.y);
+  NumOut(0, LCD_LINE6, rig.integral_error.x);
+  NumOut(0, LCD_LINE7, rig.integral_error.y);
+}
+
 void rig_move_to(Rig &rig, Vec2 target_position) {
   Vec2 direction = vec_sub(target_position, rig.position);
   Vec2 offset = rig.position;
   float distance = vec_length(direction);
-  float velocity = 0.4; // degrees/ms
-  float total_time = distance / velocity; // ms
+  float total_time = distance / TARGET_VELOCITY; // ms
 
   float t;
   float start_time = CurrentTick();
+  float current_time = start_time;
   Vec2 p;
   while(true) {
-    float current_time = CurrentTick();
+    float last_time = current_time;
+    current_time = CurrentTick();
     t = (current_time - start_time) / total_time;
     rig_update_position(rig);
     rig_regulate(rig, parametric_line(direction, offset, t));
 
-    ClearScreen();
-    NumOut(0, LCD_LINE1, t);
-    NumOut(0, LCD_LINE2, rig.power.x);
-    NumOut(0, LCD_LINE3, rig.power.y);
-    NumOut(0, LCD_LINE4, rig.position.x);
-    NumOut(0, LCD_LINE5, rig.position.y);
+    if (vec_is_null(rig.error) && t >= 1.01)
+    {
+      rig_stop(rig);
+      break;
+    }
 
     OnFwd(M_X, clamp_power(rig.power.x));
     OnFwd(M_Y, clamp_power(rig.power.y));
 
-    if (rig_is_stationary(rig) && t >= 1.0)
-    {
-      break;
-    }
+    display_rig_data(rig);
 
-    Wait(REG_TIME);
+    wait_iteration_time(current_time);
   }
 
 }
